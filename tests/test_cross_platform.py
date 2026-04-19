@@ -2,21 +2,15 @@
 Cross-platform tests for AutoLLMSE-DL skill.
 """
 
-import unittest
-import tempfile
-import os
-import sys
 from pathlib import Path
 import platform
+import tempfile
+import unittest
 
-# Add scripts directory to path
-SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
-from backup_manager import BackupManager
-from semantic_dedup import SemanticDeduplicator
-from importance_scoring import ImportanceScorer
-from compressor import MemoryCompressor
+from autollmse_dl.backup_manager import BackupManager
+from autollmse_dl.compressor import MemoryCompressor
+from autollmse_dl.importance_scoring import ImportanceScorer
+from autollmse_dl.semantic_dedup import SemanticDeduplicator
 
 
 class TestCrossPlatform(unittest.TestCase):
@@ -68,6 +62,14 @@ class TestCrossPlatform(unittest.TestCase):
             self.assertTrue(compressor.is_windows)
         else:
             self.assertFalse(compressor.is_windows)
+
+    def test_importance_scoring_assigns_scores(self):
+        """Importance scoring should annotate blocks that pass the threshold."""
+        scorer = ImportanceScorer(self.workspace_dir)
+        filtered = scorer.filter_by_importance([{"text": "关键决策：保留当前配置。"}])
+
+        self.assertEqual(len(filtered), 1)
+        self.assertGreaterEqual(filtered[0]["importance_score"], scorer.min_score_threshold)
     
     def test_file_detection(self):
         """Test memory file detection works correctly."""
@@ -97,6 +99,15 @@ class TestCrossPlatform(unittest.TestCase):
         unix_content = "line1\nline2\nline3"
         normalized = compressor._normalize_line_endings(unix_content)
         self.assertEqual(normalized, unix_content)
+
+    def test_semantic_deduplication_falls_back_without_optional_dependencies(self):
+        """Deduplication should still work when embedding dependencies are unavailable."""
+        deduplicator = SemanticDeduplicator(self.workspace_dir, similarity_threshold=0.95)
+        blocks = [{"text": "repeat me"}, {"text": "repeat me"}, {"text": "keep me"}]
+
+        deduplicated = deduplicator.remove_duplicates(blocks)
+
+        self.assertEqual([block["text"] for block in deduplicated], ["repeat me", "keep me"])
 
 
 if __name__ == "__main__":

@@ -48,13 +48,13 @@ This skill provides intelligent, cross-platform compression of OpenClaw's Markdo
 ### Manual Execution
 ```bash
 # Compress all memory files
-python -m autollmse_dl.compress --all
+python -m autollmse_dl --all
 
-# Compress specific file
-python -m autollmse_dl.compress --file MEMORY.md
+# Compress a specific file
+python -m autollmse_dl --file MEMORY.md
 
 # Preview compression results (no actual changes)
-python -m autollmse_dl.preview --all
+python -m autollmse_dl --all --preview
 ```
 
 ### Automated Integration
@@ -72,7 +72,7 @@ python -m autollmse_dl.preview --all
 
 ## Configuration
 
-Compression rules are defined in `config/compression_rules.json` and can be customized per memory file type:
+Compression rules are loaded from `autollmse_dl/config/compression_rules.json` by default, or from `<workspace>/skills/autollmse-dl/config/compression_rules.json` when the workspace provides an override:
 
 ```json
 {

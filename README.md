@@ -1,122 +1,95 @@
-# AutoLLMSE-DL - Cross-Platform Markdown Memory Compressor
+# AutoLLMSE-DL
 
-Intelligent compression system for OpenClaw's Markdown memory files with full Windows, Linux, and macOS compatibility.
+Cross-platform Markdown memory compression for OpenClaw workspaces.
 
-## Features
+The project scans `MEMORY.md`, daily memory files, hot memory, and unified summaries, then applies:
 
-- **Cross-Platform**: Works identically on Windows, Linux, and macOS
-- **Semantic Deduplication**: Removes redundant content using vector embeddings
-- **Importance Scoring**: Preserves critical information, removes low-value content
-- **Time Aggregation**: Automatically summarizes daily memory into weekly files
-- **Safety First**: Automatic backups, validation, and rollback support
+- semantic deduplication with an optional embedding model
+- importance scoring with safe heuristic fallback
+- atomic writes plus rotating backups
+- Windows, Linux, and macOS aware encoding handling
 
 ## Installation
 
-The skill is automatically available when placed in the OpenClaw skills directory:
-
-```
-~/.openclaw/workspace/skills/autollmse-dl/
+```bash
+pip install .
 ```
 
-No additional installation required. Dependencies are managed through OpenClaw's existing environment.
+Install optional semantic-search dependencies if you want embedding-based deduplication:
+
+```bash
+pip install ".[semantic]"
+```
+
+For local development:
+
+```bash
+pip install -e ".[semantic]"
+```
 
 ## Usage
 
-### Command Line Interface
+Run against the default OpenClaw workspace:
 
 ```bash
-# Compress all memory files
-python -m autollmse_dl.compress --all
-
-# Compress specific file
-python -m autollmse_dl.compress --file MEMORY.md
-
-# Preview results without making changes
-python -m autollmse_dl.preview --all
-
-# Run in automatic mode (for heartbeat integration)
-python -m autollmse_dl.compress --auto
+python -m autollmse_dl --all
 ```
 
-### Integration with OpenClaw Heartbeat
-
-Add to your `HEARTBEAT.md` for automatic execution every 6 hours:
+Or use the console script installed by the package:
 
 ```bash
-# AutoLLMSE-DL Memory Compression - Every 6 hours
-LAST_COMPRESSION_FILE="/tmp/last_autollmse_dl_timestamp"
-MIN_INTERVAL_MINUTES=360
+autollmse-dl --all
+```
 
-current_timestamp=$(date +%s)
-if [ -f "$LAST_COMPRESSION_FILE" ]; then
-    last_timestamp=$(cat "$LAST_COMPRESSION_FILE")
-    elapsed_minutes=$(( (current_timestamp - last_timestamp) / 60 ))
-    
-    if [ $elapsed_minutes -lt $MIN_INTERVAL_MINUTES ]; then
-        echo "Skipping AutoLLMSE-DL: Last run was ${elapsed_minutes} minutes ago"
-        exit 0
-    fi
-fi
+Common commands:
 
-echo "$current_timestamp" > "$LAST_COMPRESSION_FILE"
-python -m autollmse_dl.compress --auto --platform $(uname -s | tr '[:upper:]' '[:lower:]')
+```bash
+# Preview all changes without writing files
+autollmse-dl --all --preview
+
+# Compress a specific file inside the workspace
+autollmse-dl --file MEMORY.md
+
+# Point to a custom workspace
+autollmse-dl --all --workspace /path/to/workspace
+
+# Use a custom config file
+autollmse-dl --all --config /path/to/compression_rules.json
 ```
 
 ## Configuration
 
-Edit `config/compression_rules.json` to customize compression behavior:
+The compressor looks for configuration in this order:
 
-- **MEMORY.md rules**: Control which sections to preserve and importance thresholds
-- **Daily memory rules**: Configure aggregation windows and event limits
-- **Platform-specific settings**: Adjust for different OS requirements
+1. `--config /path/to/file.json`
+2. `<workspace>/skills/autollmse-dl/config/compression_rules.json`
+3. the packaged default at `autollmse_dl/config/compression_rules.json`
 
-## Safety Features
+Example:
 
-### Automatic Backup
-Before any compression operation, the system creates a backup with `.bak` extension:
-- `MEMORY.md` → `MEMORY.md.bak`
-- `memory/2026-04-20.md` → `memory/2026-04-20.md.bak`
+```json
+{
+  "MEMORY.md": {
+    "min_importance_score": 7,
+    "max_file_size_kb": 500
+  },
+  "daily_memory": {
+    "aggregate_window_days": 7,
+    "importance_threshold": 5
+  }
+}
+```
 
-### Version Retention
-Keeps the last 3 versions of compressed files for easy rollback.
+## Development
 
-### Atomic Operations
-All write operations use temporary files and atomic rename to prevent corruption.
+Run tests with the standard library test runner:
 
-## Performance Considerations
+```bash
+python -m unittest discover -s tests -v
+```
 
-- **Memory Usage**: Reserves 10% of available memory as buffer
-- **Batch Processing**: Large files processed in chunks to prevent blocking
-- **Parallel Execution**: Multiple memory files compressed simultaneously
-- **Caching**: Vector embeddings cached to avoid redundant computation
+## Notes
 
-## Platform-Specific Notes
-
-### Windows
-- Handles UTF-8 BOM markers correctly
-- Uses Windows-compatible file locking
-- Path separators automatically normalized
-
-### Linux/macOS  
-- Preserves file permissions and symlinks
-- Uses native file locking mechanisms
-- Compatible with all common shells (bash, zsh, etc.)
-
-## Troubleshooting
-
-### Common Issues
-
-**File Permission Errors**
-- Ensure OpenClaw has write access to the workspace directory
-- On Windows, run as administrator if needed
-
-**Encoding Issues** 
-- The system automatically handles UTF-8 with and without BOM
-- If issues persist, ensure your terminal uses UTF-8 encoding
-
-**Memory Exhaustion**
-- The system enforces 10% memory reservation
-- For very large memory files, increase system RAM or reduce batch size
-
-### Support
-For issues or feature requests, check the OpenClaw documentation or community forums.
+- If `sentence-transformers` or `numpy` is unavailable, semantic deduplication automatically falls back to lightweight text similarity.
+- Backups keep the latest `.bak` file plus timestamped historical versions.
+- Writes are atomic to reduce the chance of corrupting memory files during compression.

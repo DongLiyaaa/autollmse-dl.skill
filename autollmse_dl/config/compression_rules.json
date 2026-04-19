@@ -22,7 +22,7 @@
     "real_time_dedup": true,
     "emergency_preserve": ["当前任务状态", "关键决策", "下一步行动", "重要变量"],
     "max_size_kb": 100,
-    "encoding": "utf-8", 
+    "encoding": "utf-8",
     "line_ending": "lf"
   },
   "unified_summary": {
