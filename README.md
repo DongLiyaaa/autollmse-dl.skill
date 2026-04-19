@@ -101,14 +101,6 @@ Example:
 }
 ```
 
-## Development
-
-Run tests with the standard library test runner:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
 ## Notes
 
 - If `sentence-transformers` or `numpy` is unavailable, semantic deduplication automatically falls back to lightweight text similarity.
