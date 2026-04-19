@@ -57,6 +57,25 @@ autollmse-dl --all --workspace /path/to/workspace
 autollmse-dl --all --config /path/to/compression_rules.json
 ```
 
+### OpenClaw Heartbeat Integration
+
+The intended automation model is to let OpenClaw heartbeat call the skill directly:
+
+```bash
+autollmse-dl --heartbeat
+```
+
+`--heartbeat` does not use its own fixed timer. It runs once per heartbeat invocation, so if the user changes the heartbeat frequency, this skill automatically follows the new cadence.
+
+If your heartbeat file supports direct command snippets, the integration can stay as simple as:
+
+```bash
+# AutoLLMSE-DL: run once whenever heartbeat fires
+autollmse-dl --heartbeat
+```
+
+`--auto` is kept as a backward-compatible alias, but `--heartbeat` is the recommended flag.
+
 ## Configuration
 
 The compressor looks for configuration in this order:

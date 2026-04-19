@@ -59,9 +59,18 @@ python -m autollmse_dl --all --preview
 
 ### Automated Integration
 - Integrates with OpenClaw heartbeat system
-- Runs every 6 hours automatically
+- Runs once each time heartbeat invokes it
+- Automatically follows any heartbeat frequency changes
 - Respects the 10% memory reservation rule
 - Batch processing to prevent high concurrency blocking
+
+Recommended heartbeat command:
+
+```bash
+python -m autollmse_dl --heartbeat
+```
+
+`--heartbeat` has no built-in fixed schedule. OpenClaw heartbeat owns the cadence, so if the user changes the heartbeat interval, this skill follows automatically.
 
 ## Performance Optimizations
 

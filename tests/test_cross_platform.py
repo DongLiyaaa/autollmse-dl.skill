@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from autollmse_dl.backup_manager import BackupManager
+from autollmse_dl.cli import build_parser
 from autollmse_dl.compressor import MemoryCompressor
 from autollmse_dl.importance_scoring import ImportanceScorer
 from autollmse_dl.semantic_dedup import SemanticDeduplicator
@@ -108,6 +109,14 @@ class TestCrossPlatform(unittest.TestCase):
         deduplicated = deduplicator.remove_duplicates(blocks)
 
         self.assertEqual([block["text"] for block in deduplicated], ["repeat me", "keep me"])
+
+    def test_cli_accepts_heartbeat_flag(self):
+        """Heartbeat mode should be available for direct OpenClaw integration."""
+        parser = build_parser()
+        args = parser.parse_args(["--heartbeat"])
+
+        self.assertTrue(args.heartbeat)
+        self.assertFalse(args.auto)
 
 
 if __name__ == "__main__":

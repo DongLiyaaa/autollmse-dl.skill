@@ -15,7 +15,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--all", action="store_true", help="Compress all detected memory files.")
     parser.add_argument("--file", type=str, help="Compress a specific file inside the workspace.")
     parser.add_argument("--preview", action="store_true", help="Preview compression without writing files.")
-    parser.add_argument("--auto", action="store_true", help="Run in automatic mode and clean up old backups.")
+    parser.add_argument(
+        "--heartbeat",
+        action="store_true",
+        help="Run once as part of an OpenClaw heartbeat and follow the heartbeat cadence.",
+    )
+    parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="Deprecated alias for --heartbeat.",
+    )
     parser.add_argument("--workspace", type=str, help="Workspace directory path.")
     parser.add_argument("--config", type=str, help="Path to a compression rules JSON file.")
     parser.add_argument(
@@ -49,10 +58,10 @@ def main() -> None:
 
     if args.file:
         file_paths = [_resolve_target_file(workspace_dir, args.file)]
-    elif args.all or args.auto:
+    elif args.all or args.auto or args.heartbeat:
         file_paths = None
     else:
-        parser.error("Specify --all, --file, or --auto")
+        parser.error("Specify --all, --file, --heartbeat, or --auto")
 
     try:
         results = compressor.compress_files(file_paths=file_paths, preview_only=args.preview)
@@ -80,7 +89,7 @@ def main() -> None:
         if args.preview:
             print(f"  Preview: {stats['preview_content']}")
 
-    if args.auto:
+    if args.auto or args.heartbeat:
         deleted_count = compressor.cleanup_old_backups(days_old=7)
         if deleted_count:
             print(f"\nCleaned up {deleted_count} old backup files")
