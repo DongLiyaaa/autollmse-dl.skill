@@ -1,47 +1,47 @@
 # AutoLLMSE-DL
 
-Cross-platform Markdown memory compression for OpenClaw workspaces.
+面向 OpenClaw 工作区的跨平台 Markdown 记忆压缩工具。
 
-The project scans `MEMORY.md`, daily memory files, hot memory, and unified summaries, then applies:
+项目会扫描 `MEMORY.md`、每日记忆文件、热记忆文件和统一摘要文件，然后执行：
 
-- semantic deduplication with an optional embedding model
-- importance scoring with safe heuristic fallback
-- atomic writes plus rotating backups
-- Windows, Linux, and macOS aware encoding handling
+- 基于可选 embedding 模型的语义去重
+- 带安全降级策略的重要性评分
+- 原子写入与轮转备份
+- 兼容 Windows、Linux 和 macOS 的编码处理
 
-## Installation
+## 安装
 
 ```bash
 pip install .
 ```
 
-Install optional semantic-search dependencies if you want embedding-based deduplication:
+如果你想启用基于 embedding 的语义去重，可以安装可选依赖：
 
 ```bash
 pip install ".[semantic]"
 ```
 
-For local development:
+如果你是在本地开发或调试：
 
 ```bash
 pip install -e ".[semantic]"
 ```
 
-## Usage
+## 使用方式
 
-Run against the default OpenClaw workspace:
+针对默认 OpenClaw 工作区运行：
 
 ```bash
 python -m autollmse_dl --all
 ```
 
-Or use the console script installed by the package:
+或者使用安装后提供的命令行脚本：
 
 ```bash
 autollmse-dl --all
 ```
 
-Common commands:
+常用命令：
 
 ```bash
 # Preview all changes without writing files
@@ -59,34 +59,34 @@ autollmse-dl --all --config /path/to/compression_rules.json
 
 ### OpenClaw Heartbeat Integration
 
-This project is intended to be heartbeat-driven inside OpenClaw. The recommended integration is:
+这个项目的设计目标是在 OpenClaw 中由 heartbeat 直接驱动。推荐接入方式如下：
 
 ```bash
 autollmse-dl --heartbeat
 ```
 
-`--heartbeat` does not use its own fixed timer. It runs once per heartbeat invocation, so if the user changes the heartbeat frequency, this skill automatically follows the new cadence.
+`--heartbeat` 不会再维护一个自己的固定定时器。它会在 heartbeat 每次触发时运行一次，所以如果用户修改了 heartbeat 的频率，这个 skill 会自动跟随新的节奏。
 
-In other words, heartbeat owns the schedule and this skill only performs one compression pass per heartbeat run.
+换句话说，调度权完全属于 heartbeat，而这个 skill 只负责在每次 heartbeat 触发时执行一轮压缩。
 
-If your heartbeat file supports direct command snippets, the integration can stay as simple as:
+如果你的 heartbeat 文件支持直接写命令片段，那么可以简化成下面这样：
 
 ```bash
 # AutoLLMSE-DL: run once whenever heartbeat fires
 autollmse-dl --heartbeat
 ```
 
-`--auto` is kept as a backward-compatible alias, but `--heartbeat` is the recommended flag.
+`--auto` 仍然保留为兼容旧写法的别名，但推荐优先使用 `--heartbeat`。
 
-## Configuration
+## 配置
 
-The compressor looks for configuration in this order:
+压缩器会按照下面的优先级顺序查找配置文件：
 
 1. `--config /path/to/file.json`
 2. `<workspace>/skills/autollmse-dl/config/compression_rules.json`
-3. the packaged default at `autollmse_dl/config/compression_rules.json`
+3. 包内默认配置 `autollmse_dl/config/compression_rules.json`
 
-Example:
+示例：
 
 ```json
 {
@@ -101,8 +101,8 @@ Example:
 }
 ```
 
-## Notes
+## 说明
 
-- If `sentence-transformers` or `numpy` is unavailable, semantic deduplication automatically falls back to lightweight text similarity.
-- Backups keep the latest `.bak` file plus timestamped historical versions.
-- Writes are atomic to reduce the chance of corrupting memory files during compression.
+- 如果环境里没有安装 `sentence-transformers` 或 `numpy`，语义去重会自动降级为轻量级文本相似度比较。
+- 备份会保留最新的 `.bak` 文件，以及带时间戳的历史版本。
+- 写入过程采用原子操作，以尽量降低压缩过程中损坏记忆文件的风险。
