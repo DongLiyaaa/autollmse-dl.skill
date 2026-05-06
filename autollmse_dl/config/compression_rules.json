@@ -2,6 +2,9 @@
   "MEMORY.md": {
     "keep_sections": ["核心身份", "重要配置", "关键决策", "系统架构", "待关注", "截图方法", "浏览器控制方法", "技能优化记录", "记忆系统回滚状态", "卖家精灵流量词导出任务"],
     "min_importance_score": 7,
+    "soft_importance_score": 5.5,
+    "min_retention_ratio": 0.35,
+    "max_blocks": 24,
     "time_decay_factor": 0.8,
     "max_file_size_kb": 500,
     "preserve_code_blocks": true,
@@ -11,6 +14,9 @@
   "daily_memory": {
     "aggregate_window_days": 7,
     "importance_threshold": 5,
+    "soft_importance_score": 4.0,
+    "min_retention_ratio": 0.30,
+    "max_blocks": 18,
     "event_summarization": true,
     "max_events_per_day": 20,
     "filename_pattern": "memory/{date}.md",
@@ -21,6 +27,10 @@
   "hot_memory": {
     "real_time_dedup": true,
     "emergency_preserve": ["当前任务状态", "关键决策", "下一步行动", "重要变量"],
+    "min_importance_score": 6,
+    "soft_importance_score": 4.5,
+    "min_retention_ratio": 0.45,
+    "max_blocks": 14,
     "max_size_kb": 100,
     "encoding": "utf-8",
     "line_ending": "lf"
@@ -29,6 +39,10 @@
     "session_limit": 12,
     "message_preview_length": 100,
     "latest_messages_to_keep": 5,
+    "min_importance_score": 6,
+    "soft_importance_score": 4.5,
+    "min_retention_ratio": 0.40,
+    "max_blocks": 16,
     "encoding": "utf-8",
     "line_ending": "lf"
   },
@@ -43,5 +57,12 @@
       "encoding": "utf-8",
       "line_ending": "lf"
     }
+  },
+  "llm": {
+    "enabled": false,
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "timeout_seconds": 45,
+    "max_block_chars": 1200
   }
 }

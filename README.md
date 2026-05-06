@@ -78,6 +78,145 @@ autollmse-dl --heartbeat
 
 `--auto` 仍然保留为兼容旧写法的别名，但推荐优先使用 `--heartbeat`。
 
+### 系统级自动触发模板
+
+如果目标平台没有像 OpenClaw heartbeat 这样的内建触发机制，推荐使用操作系统自己的定时器，而不是让项目自己维护后台循环。
+
+这类场景下，统一使用普通命令即可：
+
+```bash
+autollmse-dl --all
+```
+
+如果没有全局安装命令，也可以写成：
+
+```bash
+python -m autollmse_dl --all
+```
+
+#### macOS: `launchd`
+
+下面这个例子表示每 30 分钟执行一次。把内容保存成 `~/Library/LaunchAgents/com.dongli.autollmse-dl.plist`：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.dongli.autollmse-dl</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/zsh</string>
+      <string>-lc</string>
+      <string>autollmse-dl --all --workspace "$HOME/.openclaw/workspace"</string>
+    </array>
+
+    <key>StartInterval</key>
+    <integer>1800</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/autollmse-dl.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/autollmse-dl.err</string>
+  </dict>
+</plist>
+```
+
+加载方式：
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.dongli.autollmse-dl.plist 2>/dev/null || true
+launchctl load ~/Library/LaunchAgents/com.dongli.autollmse-dl.plist
+launchctl start com.dongli.autollmse-dl
+```
+
+#### Linux: `cron`
+
+下面这个例子表示每 30 分钟执行一次：
+
+```cron
+*/30 * * * * /bin/bash -lc 'autollmse-dl --all --workspace "$HOME/.openclaw/workspace" >> /tmp/autollmse-dl.log 2>&1'
+```
+
+编辑方式：
+
+```bash
+crontab -e
+```
+
+#### Linux: `systemd --user`
+
+如果你更偏向 `systemd`，可以用下面这组文件。
+
+`~/.config/systemd/user/autollmse-dl.service`
+
+```ini
+[Unit]
+Description=AutoLLMSE-DL memory compression
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -lc 'autollmse-dl --all --workspace "$HOME/.openclaw/workspace"'
+```
+
+`~/.config/systemd/user/autollmse-dl.timer`
+
+```ini
+[Unit]
+Description=Run AutoLLMSE-DL every 30 minutes
+
+[Timer]
+OnBootSec=2m
+OnUnitActiveSec=30m
+Unit=autollmse-dl.service
+
+[Install]
+WantedBy=timers.target
+```
+
+启用方式：
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now autollmse-dl.timer
+systemctl --user status autollmse-dl.timer
+```
+
+#### Windows: Task Scheduler
+
+可以在“任务计划程序”里创建一个基本任务，按固定间隔运行下面的命令：
+
+程序：
+
+```text
+powershell.exe
+```
+
+参数：
+
+```text
+-NoProfile -ExecutionPolicy Bypass -Command "autollmse-dl --all --workspace $env:USERPROFILE\.openclaw\workspace"
+```
+
+如果你想用命令行创建一个每 30 分钟运行一次的任务，也可以用：
+
+```powershell
+schtasks /Create /SC MINUTE /MO 30 /TN "AutoLLMSE-DL" /TR "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"autollmse-dl --all --workspace $env:USERPROFILE\.openclaw\workspace\"" /F
+```
+
+### 多平台使用建议
+
+- OpenClaw：使用 `--heartbeat`
+- 其他平台但需要自动执行：使用系统级调度器 + `--all`
+- 其他平台但不需要自动执行：由用户或 agent 手动运行 `autollmse-dl --all`
+
+也就是说，项目本身负责“执行一次压缩”，而“什么时候触发执行”应该交给宿主平台或操作系统。
+
 ## 配置
 
 压缩器会按照下面的优先级顺序查找配置文件：
@@ -101,8 +240,49 @@ autollmse-dl --heartbeat
 }
 ```
 
+### 真实 LLM 模式
+
+默认情况下，项目仍然使用本地启发式评分，不会发起外部模型请求。
+
+如果要启用真实 LLM 评分与摘要生成，当前支持 OpenAI Responses API。启用方式：
+
+```bash
+export OPENAI_API_KEY="your_api_key"
+export AUTOLLMSE_DL_LLM_ENABLED=true
+```
+
+可选环境变量：
+
+```bash
+export AUTOLLMSE_DL_LLM_PROVIDER=openai
+export AUTOLLMSE_DL_OPENAI_MODEL=gpt-4o-mini
+export AUTOLLMSE_DL_LLM_TIMEOUT=45
+export AUTOLLMSE_DL_LLM_MAX_BLOCK_CHARS=1200
+```
+
+也可以在配置文件里加入：
+
+```json
+{
+  "llm": {
+    "enabled": true,
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "timeout_seconds": 45,
+    "max_block_chars": 1200
+  }
+}
+```
+
+启用后，流程会保持不变，但评分阶段会对每个文件批量调用一次真实 LLM，为各个 block 生成：
+
+- 更真实的语义重要性分数
+- 是否必须保留的判断
+- 用于压缩摘要头的简短总结句
+
 ## 说明
 
 - 如果环境里没有安装 `sentence-transformers` 或 `numpy`，语义去重会自动降级为轻量级文本相似度比较。
+- 如果未启用 LLM，或者 LLM 请求失败，系统会自动回退到本地启发式评分，不会中断压缩主流程。
 - 备份会保留最新的 `.bak` 文件，以及带时间戳的历史版本。
 - 写入过程采用原子操作，以尽量降低压缩过程中损坏记忆文件的风险。
