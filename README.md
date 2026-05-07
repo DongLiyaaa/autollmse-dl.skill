@@ -11,6 +11,16 @@
 
 ## 安装
 
+下面这些安装命令默认都在**仓库根目录**执行。
+
+如果你是从 GitHub 拉取项目后再安装，推荐顺序是：
+
+```bash
+git clone https://github.com/DongLiyaaa/autollmse-dl.skill.git
+cd autollmse-dl.skill
+pip install .
+```
+
 ```bash
 pip install .
 ```
