@@ -60,6 +60,14 @@ class OpenAIResponsesLLMClient:
     def is_enabled(self) -> bool:
         return self.enabled
 
+    @staticmethod
+    def _coerce_bool(value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int) and value in {0, 1}:
+            return bool(value)
+        return False
+
     def score_blocks(self, *, file_path: str, profile_name: str, profile: dict, blocks: list[dict]) -> dict[str, dict]:
         """Return LLM scores keyed by block_id."""
         if not self.is_enabled() or not blocks:
@@ -118,7 +126,7 @@ class OpenAIResponsesLLMClient:
                 score = 0.0
             results[block_id] = {
                 "score": max(0.0, min(10.0, score)),
-                "must_keep": bool(item.get("must_keep", False)),
+                "must_keep": self._coerce_bool(item.get("must_keep", False)),
                 "summary": str(item.get("summary", "")).strip(),
                 "reason": str(item.get("reason", "")).strip(),
             }

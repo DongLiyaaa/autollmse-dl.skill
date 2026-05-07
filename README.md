@@ -4,7 +4,7 @@
 
 项目会扫描 `MEMORY.md`、每日记忆文件、热记忆文件和统一摘要文件，然后执行：
 
-- 基于可选 embedding 模型的语义去重
+- 基于 embedding 模型的语义去重
 - 带安全降级策略的重要性评分
 - 原子写入与轮转备份
 - 兼容 Windows、Linux 和 macOS 的编码处理
@@ -26,6 +26,8 @@ pip install ".[semantic]"
 ```bash
 pip install -e ".[semantic]"
 ```
+
+安装完可选依赖后，如果本地还没有 `BAAI/bge-m3`，项目会在首次需要语义去重时自动下载并缓存模型。这是显式设计行为，类似“自动安装运行期模型依赖”。
 
 ## 使用方式
 
@@ -280,9 +282,51 @@ export AUTOLLMSE_DL_LLM_MAX_BLOCK_CHARS=1200
 - 是否必须保留的判断
 - 用于压缩摘要头的简短总结句
 
+### Embedding 模型下载策略
+
+语义去重使用 `sentence-transformers` + `BAAI/bge-m3`。
+
+默认行为：
+
+- 如果没有安装 `sentence-transformers` / `numpy`，自动回退到轻量级文本相似度
+- 如果依赖已安装，但本地没有 `BAAI/bge-m3`，则自动下载模型并缓存到本地
+- 如果模型已缓存，则直接复用，不重复下载
+
+相关配置示例：
+
+```json
+{
+  "semantic_model": {
+    "provider": "sentence_transformers",
+    "model_name": "BAAI/bge-m3",
+    "auto_download": true,
+    "local_files_only": false,
+    "cache_dir": ".cache/models"
+  }
+}
+```
+
+可选环境变量：
+
+```bash
+export AUTOLLMSE_DL_EMBEDDING_PROVIDER=sentence_transformers
+export AUTOLLMSE_DL_EMBEDDING_MODEL=BAAI/bge-m3
+export AUTOLLMSE_DL_EMBEDDING_AUTO_DOWNLOAD=true
+export AUTOLLMSE_DL_EMBEDDING_LOCAL_ONLY=false
+export AUTOLLMSE_DL_EMBEDDING_CACHE_DIR="$HOME/.openclaw/workspace/.cache/models"
+```
+
+如果你希望只使用本地缓存、绝不联网，可以设置：
+
+```bash
+export AUTOLLMSE_DL_EMBEDDING_LOCAL_ONLY=true
+export AUTOLLMSE_DL_EMBEDDING_AUTO_DOWNLOAD=false
+```
+
 ## 说明
 
 - 如果环境里没有安装 `sentence-transformers` 或 `numpy`，语义去重会自动降级为轻量级文本相似度比较。
+- 如果依赖已安装但模型尚未缓存，默认会自动下载 `BAAI/bge-m3` 并缓存到本地。
 - 如果未启用 LLM，或者 LLM 请求失败，系统会自动回退到本地启发式评分，不会中断压缩主流程。
 - 备份会保留最新的 `.bak` 文件，以及带时间戳的历史版本。
 - 写入过程采用原子操作，以尽量降低压缩过程中损坏记忆文件的风险。

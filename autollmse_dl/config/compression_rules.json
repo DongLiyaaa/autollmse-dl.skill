@@ -64,5 +64,12 @@
     "model": "gpt-4o-mini",
     "timeout_seconds": 45,
     "max_block_chars": 1200
+  },
+  "semantic_model": {
+    "provider": "sentence_transformers",
+    "model_name": "BAAI/bge-m3",
+    "auto_download": true,
+    "local_files_only": false,
+    "cache_dir": ".cache/models"
   }
 }
