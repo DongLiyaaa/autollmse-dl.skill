@@ -1,11 +1,11 @@
 ---
 name: autollmse-dl
-description: OpenClaw-first memory compression skill designed to run directly from heartbeat. Compresses MEMORY.md and memory/*.md while following the user's current heartbeat cadence automatically.
+description: OpenClaw-first memory compression skill that reduces context bloat with semantic deduplication, importance scoring, and heartbeat-aligned execution.
 ---
 
 # AutoLLMSE-DL Skill
 
-这是一个面向 OpenClaw 的记忆压缩 skill，核心目标是：
+这是一个面向 OpenClaw 的记忆压缩 skill，用于通过语义去重、重要性评分和压缩重建缓解长对话带来的上下文膨胀与回复失焦问题。核心目标是：
 
 - 扫描 `MEMORY.md`、`memory/*.md`、`memory/hot/HOT_MEMORY.md`、`memory/unified_conversation_summary.md`
 - 执行语义去重、重要性评分和压缩重建
