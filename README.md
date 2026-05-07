@@ -108,7 +108,7 @@ python -m autollmse_dl --all
 
 #### macOS: `launchd`
 
-下面这个例子表示每 30 分钟执行一次。把内容保存成 `~/Library/LaunchAgents/com.dongli.autollmse-dl.plist`：
+下面这个例子表示每 30 分钟执行一次。把内容保存成 `~/Library/LaunchAgents/com.example.autollmse-dl.plist`：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -116,7 +116,7 @@ python -m autollmse_dl --all
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>com.dongli.autollmse-dl</string>
+    <string>com.example.autollmse-dl</string>
 
     <key>ProgramArguments</key>
     <array>
@@ -142,9 +142,9 @@ python -m autollmse_dl --all
 加载方式：
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.dongli.autollmse-dl.plist 2>/dev/null || true
-launchctl load ~/Library/LaunchAgents/com.dongli.autollmse-dl.plist
-launchctl start com.dongli.autollmse-dl
+launchctl unload ~/Library/LaunchAgents/com.example.autollmse-dl.plist 2>/dev/null || true
+launchctl load ~/Library/LaunchAgents/com.example.autollmse-dl.plist
+launchctl start com.example.autollmse-dl
 ```
 
 #### Linux: `cron`
